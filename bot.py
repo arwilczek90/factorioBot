@@ -45,7 +45,7 @@ async def startServer(ctx):
         await ctx.send('Starting Factorio Server')
         start_response = client.start_instances(InstanceIds=[instance_id])
         print(json.dumps(start_response))
-        ctx.send('Server Starting, it takes a while to bulid all those blue circuts. \n I\'ll get back to you with the IP Address in a bit.')
+        await ctx.send('Server Starting, it takes a while to bulid all those blue circuts. \n I\'ll get back to you with the IP Address in a bit.')
         running = False
         public_ip_address = ''
         while not running:
@@ -66,7 +66,7 @@ async def stopServer(ctx):
         await ctx.send('Starting Factorio Server')
         start_response = client.stop_instances(InstanceIds=[instance_id])
         print(json.dumps(start_response))
-        ctx.send('Server Stopping by use of artillery')
+        await ctx.send('Server Stopping by use of artillery')
         running = True
         while running:
             describe_response = client.describe_instances(InstanceIds=[instance_id])
