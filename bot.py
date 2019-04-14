@@ -42,6 +42,12 @@ async def greet(ctx):
 @bot.command()
 async def startServer(ctx):
     try:
+        describe_response = client.describe_instances(InstanceIds=[instance_id])
+        instances = describe_response.get('Instances', [])
+        for instance in instances:
+            if instance.get('State', {}).get('Code') !=80:
+                await ctx.send(f'Can\'t stop factorio server as it is in {instance.get("State").get("Name")} state')
+                return
         await ctx.send('Starting Factorio Server')
         start_response = client.start_instances(InstanceIds=[instance_id])
         print(json.dumps(start_response))
@@ -63,6 +69,12 @@ async def startServer(ctx):
 @bot.command()
 async def stopServer(ctx):
     try:
+        describe_response = client.describe_instances(InstanceIds=[instance_id])
+        instances = describe_response.get('Instances', [])
+        for instance in instances:
+            if instance.get('State', {}).get('Code') !=16:
+                await ctx.send(f'Can\'t stop factorio server as it is in {instance.get("State").get("Name")} state')
+                return
         await ctx.send('Starting Factorio Server')
         start_response = client.stop_instances(InstanceIds=[instance_id])
         print(json.dumps(start_response))
