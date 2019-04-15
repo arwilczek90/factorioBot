@@ -56,11 +56,14 @@ async def startServer(ctx):
         public_ip_address = ''
         while not running:
             describe_response = client.describe_instances(InstanceIds=[instance_id])
-            instances = describe_response.get('Instances', [])
-            for instance in instances:
-                if instance.get('State', {}).get('Code') == 16:
-                    running = True
-                    public_ip_address = instance.get('PublicIpAddress')
+            reservations = describe_response.get('Reservations', [])
+            for reservation in reservations:
+                instances = reservation.get('Instances', [])
+                print(len(instances))
+                for instance in instances:
+                    if instance.get('State', {}).get('Code') == 16:
+                        running = True
+                        public_ip_address = instance.get('PublicIpAddress')
 
         await ctx.send(f'Factorio server running at {public_ip_address} . Make The Factory Grow!')
     except Exception as err:
@@ -75,17 +78,20 @@ async def stopServer(ctx):
             if instance.get('State', {}).get('Code') !=16:
                 await ctx.send(f'Can\'t stop factorio server as it is in {instance.get("State").get("Name")} state')
                 return
-        await ctx.send('Starting Factorio Server')
+        await ctx.send('Stopping Server Factorio Server')
         start_response = client.stop_instances(InstanceIds=[instance_id])
         print(json.dumps(start_response))
         await ctx.send('Server Stopping by use of artillery')
         running = True
         while running:
             describe_response = client.describe_instances(InstanceIds=[instance_id])
-            instances = describe_response.get('Instances', [])
-            for instance in instances:
-                if instance.get('State', {}).get('Code') == 80:
-                    running = False
+            reservations = describe_response.get('Reservations', [])
+            for reservation in reservations:
+                instances = reservation.get('Instances', [])
+                print(len(instances))
+                for instance in instances:
+                    if instance.get('State', {}).get('Code') == 80:
+                        running = False
             time.sleep(10)
 
         await ctx.send(f'Factorio server stopped')
