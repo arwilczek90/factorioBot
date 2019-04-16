@@ -7,6 +7,7 @@ import sys
 import boto3
 from discord.ext import commands
 from sentry_sdk import init, capture_exception, capture_message
+
 if os.environ.get("ENABLE_SENTRY", 'false') == 'true':
     init(os.environ['SENTRY_DSN'])
 try:
@@ -40,18 +41,20 @@ async def greet(ctx):
 
 
 @bot.command()
-async def startServer(ctx):
+async def start_server(ctx):
     try:
         describe_response = client.describe_instances(InstanceIds=[instance_id])
         instances = describe_response.get('Instances', [])
         for instance in instances:
-            if instance.get('State', {}).get('Code') !=80:
+            if instance.get('State', {}).get('Code') != 80:
                 await ctx.send(f'Can\'t stop factorio server as it is in {instance.get("State").get("Name")} state')
                 return
         await ctx.send('Starting Factorio Server')
         start_response = client.start_instances(InstanceIds=[instance_id])
         print(json.dumps(start_response))
-        await ctx.send('Server Starting, it takes a while to bulid all those blue circuts. \n I\'ll get back to you with the IP Address in a bit.')
+        await ctx.send(
+            'Server Starting, it takes a while to bulid all those blue circuts. '
+            '\n I\'ll get back to you with the IP Address in a bit.')
         running = False
         public_ip_address = ''
         while not running:
@@ -69,13 +72,47 @@ async def startServer(ctx):
     except Exception as err:
         capture_exception(err)
 
+
 @bot.command()
-async def stopServer(ctx):
+async def server_status(ctx):
+    try:
+        describe_response = client.describe_instances(InstanceIds=[instance_id])
+        reservations = describe_response.get('Reservations', [])
+        for reservation in reservations:
+            instances = reservation.get('Instances', [])
+            print(len(instances))
+            for instance in instances:
+                status = instance.get('State', {}).get('Name')
+                ctx.send(f'The server is {status}')
+    except Exception as err:
+        capture_exception(err)
+
+
+@bot.command()
+async def ip(ctx):
+    try:
+        describe_response = client.describe_instances(InstanceIds=[instance_id])
+        reservations = describe_response.get('Reservations', [])
+        for reservation in reservations:
+            instances = reservation.get('Instances', [])
+            print(len(instances))
+            for instance in instances:
+                if instance.get('State', {}).get('Code') == 16:
+                    public_ip_address = instance.get('PublicIpAddress')
+                    ctx.send(f'The server\'s IP Address: {public_ip_address}')
+                else:
+                    ctx.send(f'The server isn\'t running please start the server to see its IP Address.')
+    except Exception as err:
+        capture_exception(err)
+
+
+@bot.command()
+async def stop_server(ctx):
     try:
         describe_response = client.describe_instances(InstanceIds=[instance_id])
         instances = describe_response.get('Instances', [])
         for instance in instances:
-            if instance.get('State', {}).get('Code') !=16:
+            if instance.get('State', {}).get('Code') != 16:
                 await ctx.send(f'Can\'t stop factorio server as it is in {instance.get("State").get("Name")} state')
                 return
         await ctx.send('Stopping Server Factorio Server')
