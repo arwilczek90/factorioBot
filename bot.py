@@ -1,9 +1,8 @@
+import json
+import os
+import sys
 import time
 
-import discord
-import os
-import json
-import sys
 import boto3
 from discord.ext import commands
 from sentry_sdk import init, capture_exception, capture_message
@@ -83,7 +82,7 @@ async def server_status(ctx):
             print(len(instances))
             for instance in instances:
                 status = instance.get('State', {}).get('Name')
-                ctx.send(f'The server is {status}')
+                await ctx.send(f'The server is {status}')
     except Exception as err:
         capture_exception(err)
 
@@ -99,9 +98,9 @@ async def ip(ctx):
             for instance in instances:
                 if instance.get('State', {}).get('Code') == 16:
                     public_ip_address = instance.get('PublicIpAddress')
-                    ctx.send(f'The server\'s IP Address: {public_ip_address}')
+                    await ctx.send(f'The server\'s IP Address: {public_ip_address}')
                 else:
-                    ctx.send(f'The server isn\'t running please start the server to see its IP Address.')
+                    await ctx.send(f'The server isn\'t running please start the server to see its IP Address.')
     except Exception as err:
         capture_exception(err)
 
