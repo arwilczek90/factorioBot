@@ -11,20 +11,18 @@ ENABLE_SENTRY = os.environ.get('SENTRY_DSN') is not None
 
 if ENABLE_SENTRY:
     init(os.environ['SENTRY_DSN'])
-try:
-    access_key = os.environ['ACCESS_KEY']
-    secret_key = os.environ['SECRET_KEY']
-except KeyError as e:
-    capture_message('AWS Access keys aren\'t available')
-    sys.exit(1)
+
 try:
     instance_id = os.environ["INSTANCE_ID"]
 except KeyError as e:
     capture_message('No INSTANCE_ID provided')
+    print("No INSTANCE_ID provided as environment variable")
     sys.exit(1)
 
-bot = commands.Bot(command_prefix='$')
-ec2 = boto3.client('ec2', region_name='us-east-1', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+region = os.environ.get('AWS_REGION', 'us-east-1')
+command_prefix = os.environ.get('COMMAND_PREFIX', '$')
+bot = commands.Bot(command_prefix=command_prefix)
+ec2 = boto3.client('ec2', region_name=region)
 
 
 @bot.event
@@ -49,8 +47,7 @@ async def start_server(ctx):
             await ctx.send(f'Can\'t stop factorio server as it is in {instance.get("State").get("Name")} state')
             return
     await ctx.send('Starting Factorio Server')
-    start_response = ec2.start_instances(InstanceIds=[instance_id])
-    print(json.dumps(start_response))
+    ec2.start_instances(InstanceIds=[instance_id])
     await ctx.send(
         'Server Starting, it takes a while to bulid all those blue circuts. '
         '\n I\'ll get back to you with the IP Address in a bit.')
@@ -61,7 +58,6 @@ async def start_server(ctx):
         reservations = describe_response.get('Reservations', [])
         for reservation in reservations:
             instances = reservation.get('Instances', [])
-            print(len(instances))
             for instance in instances:
                 if instance.get('State', {}).get('Code') == 16:
                     running = True
@@ -109,8 +105,7 @@ async def stop_server(ctx):
             await ctx.send(f'Can\'t stop factorio server as it is in {instance.get("State").get("Name")} state')
             return
     await ctx.send('Stopping Server Factorio Server')
-    start_response = ec2.stop_instances(InstanceIds=[instance_id])
-    print(json.dumps(start_response))
+    ec2.stop_instances(InstanceIds=[instance_id])
     await ctx.send('Server Stopping by use of artillery')
     running = True
     while running:
@@ -118,7 +113,6 @@ async def stop_server(ctx):
         reservations = describe_response.get('Reservations', [])
         for reservation in reservations:
             instances = reservation.get('Instances', [])
-            print(len(instances))
             for instance in instances:
                 if instance.get('State', {}).get('Code') == 80:
                     running = False
