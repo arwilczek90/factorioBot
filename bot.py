@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 import time
@@ -66,7 +65,6 @@ async def start_server(ctx):
     await ctx.send(f'Factorio server running at {public_ip_address} . Make The Factory Grow!')
 
 
-
 @bot.command()
 async def server_status(ctx):
     describe_response = ec2.describe_instances(InstanceIds=[instance_id])
@@ -77,7 +75,6 @@ async def server_status(ctx):
         for instance in instances:
             status = instance.get('State', {}).get('Name')
             await ctx.send(f'The server is {status}')
-
 
 
 @bot.command()
@@ -93,7 +90,6 @@ async def ip(ctx):
                 raise Exception("sdlkjghasdfg")
             else:
                 await ctx.send(f'The server isn\'t running please start the server to see its IP Address.')
-
 
 
 @bot.command()
