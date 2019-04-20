@@ -14,8 +14,6 @@ if ENABLE_SENTRY:
 try:
     access_key = os.environ['ACCESS_KEY']
     secret_key = os.environ['SECRET_KEY']
-    print(access_key)
-    print(secret_key)
 except KeyError as e:
     capture_message('AWS Access keys aren\'t available')
     sys.exit(1)
@@ -23,6 +21,7 @@ try:
     instance_id = os.environ["INSTANCE_ID"]
 except KeyError as e:
     capture_message('No INSTANCE_ID provided')
+    sys.exit(1)
 
 bot = commands.Bot(command_prefix='$')
 ec2 = boto3.client('ec2', region_name='us-east-1', aws_access_key_id=access_key, aws_secret_access_key=secret_key)
@@ -91,11 +90,11 @@ async def ip(ctx):
     reservations = describe_response.get('Reservations', [])
     for reservation in reservations:
         instances = reservation.get('Instances', [])
-        print(len(instances))
         for instance in instances:
             if instance.get('State', {}).get('Code') == 16:
                 public_ip_address = instance.get('PublicIpAddress')
                 await ctx.send(f'The server\'s IP Address: {public_ip_address}')
+                raise Exception("sdlkjghasdfg")
             else:
                 await ctx.send(f'The server isn\'t running please start the server to see its IP Address.')
 
@@ -128,11 +127,13 @@ async def stop_server(ctx):
     await ctx.send(f'Factorio server stopped')
 
 
-async def handle_exception(event):
-    err = sys.exc_info()
+async def handle_exception(event, *args, **kwargs):
+    original_exception = args[0].original
     if ENABLE_SENTRY:
-        capture_exception(err)
-    print(err)
+        capture_exception(original_exception)
+    print(original_exception)
 
-bot.on_error(handle_exception)
+
+bot.on_error = handle_exception
+bot.on_command_error = handle_exception
 bot.run(os.environ['BOT_TOKEN'])
